@@ -1,0 +1,120 @@
+// int statusPin = 11; //led моргает состояние
+// int statusPinBright = 120;    // как ярко горит светодиод
+// int statusPinFade = 5;    // на какое значение будет затухать/загораться светодиод
+
+int speakerPin = 13; // зуммер
+
+int switchPin1 = 2; //кнопка1 запуска блока1
+int switchPin2 = 3;
+int switchPinReset1 = 14;
+int switchPinReset2 = 15;
+int ledPin1[] = { 4, 5, 6, 7 }; // перечень пинов блока1
+int ledPin2[] = { 8, 9, 10, 12 }; // перечень пинов блока1
+int ledPin1_i;
+int ledPin2_i;
+int ledPinArrSize1;
+int ledPinArrSize2;
+int val1;
+int val2;
+int state1;
+int state2;
+int c1;
+int c2;
+#define TIMELED 500UL // 0.5 сек для теста. рабочее = 2 сек // время горения ledPin
+
+
+// функция запуска ledPin блока
+void ledPinInit(int *ledPinArray, int ledPinArrSize, int val){
+  if (val <= ledPinArrSize){ // если ledPin не кончились
+    int ledPinArrayNum = val - 1; // val начинается с 1, ledPinArrayNum начинается с 0
+    unsigned long timer = millis();
+    while (millis() - timer < TIMELED){ // включаем ledPin на TIMELED сек
+      digitalWrite(ledPinArray[ledPinArrayNum], HIGH); // включаем ledPin
+    }
+    digitalWrite(ledPinArray[ledPinArrayNum], LOW); // выключаем ledPin
+  
+    // сигнал счетчик сработок в блоке
+    int i = 0;
+    while (i < val){
+      delay(700);
+      digitalWrite(speakerPin, HIGH);
+      delay(700);
+      digitalWrite(speakerPin, LOW);
+      i++;
+    }
+  }
+  else { // если ledPin кончились, 2 коротких сигнала
+    int i = 0;
+    while (i < 2){
+      digitalWrite(speakerPin, HIGH);
+      delay(200);
+      digitalWrite(speakerPin, LOW);
+      delay(200);
+      i++;
+    }
+  }
+}
+// КОНЕЦ функции запуска ledPin блока
+
+void setup(){
+//  pinMode(statusPin, OUTPUT); // светодиод состояния 
+//  digitalWrite(statusPin, LOW);
+  
+  pinMode(speakerPin, OUTPUT); // спикер оповещения
+  digitalWrite(speakerPin, LOW);
+// кнопки запуска блоков  
+  pinMode(switchPin1, INPUT); //кнопка1
+  pinMode(switchPin2, INPUT); //кнопка2 
+// размер массива блоков  
+  ledPinArrSize1 = sizeof(ledPin1) / sizeof(int);
+  ledPinArrSize2 = sizeof(ledPin2) / sizeof(int);
+// пины блоков
+  for (ledPin1_i = 0; ledPin1_i <= ledPinArrSize1; ledPin1_i++){
+    pinMode(ledPin1[ledPin1_i], OUTPUT);
+    digitalWrite(ledPin1[ledPin1_i], LOW);
+  }
+  for (ledPin2_i = 0; ledPin2_i <= ledPinArrSize2; ledPin2_i++){
+    pinMode(ledPin2[ledPin2_i], OUTPUT);
+    digitalWrite(ledPin2[ledPin2_i], LOW);
+  }
+  
+//  Serial.begin(9600);
+//  Serial.println(digitalRead(2));
+}
+
+void loop(){
+  
+  // обрабатываем нажатие кнопки запуска 1го блока
+  state1 = digitalRead(switchPin1);
+  if (state1 == HIGH && c1 == 0){ // нажали кнопку1
+    delay(20); //устранение дребезга
+    c1 = 1; // устанавливаем флаг нажатия
+  }
+  if (state1 == LOW && c1 == 1){ // отпустили кнопку1
+    delay(20); //устранение дребезга
+    val1 = ++val1; // считаем кол-во нажатий
+    ledPinInit(ledPin1, ledPinArrSize1, val1); //  Включаем ledPin1 из массива с порядковым номером = val1
+    c1 = 0; // сбрасываем флаг нажатия
+  }
+  // обрабатываем нажатие кнопки запуска 2го блока
+  state2 = digitalRead(switchPin2); 
+    if (state2 == HIGH && c2 == 0){ // нажали кнопку2
+    delay(20); //устранение дребезга
+  c2 = 1; // устанавливаем флаг нажатия
+  }
+  if (state2 == LOW && c2 == 1){ // отпустили кнопку2
+    delay(20); //устранение дребезга
+    val2 = ++val2; // считаем кол-во нажатий
+    ledPinInit(ledPin2, ledPinArrSize2, val2); //  Включаем ledPin2 из массива с порядковым номером = val1
+    c2 = 0; // сбрасываем флаг нажатия
+  }
+  
+  // кнопка1 сброса счетчика срабатываний для замены блока1
+  if (digitalRead(switchPinReset1) == HIGH){
+    val1 = 0;
+  }
+  // кнопка2 сброса счетчика срабатываний для замены блока2
+  if (digitalRead(switchPinReset2) == HIGH){
+    val2 = 0;
+  }
+}

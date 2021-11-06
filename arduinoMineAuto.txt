@@ -1,0 +1,221 @@
+int statusPin = 11; //led отображает состояние авто/ручное/сработка
+int statusPinBright = 120;    // как ярко горит светодиод
+int statusPinFade = 5;    // на какое значение будет затухать/загораться светодиод
+
+int speakerPin = 13; // спикер оповещения
+int switchPin1 = 2; //кнопка1 запуска блока1
+int switchPinReset1 = 14;
+int autoManualPin = 19; // переключатель режима автосрабатывание или оповещение 
+
+int ledPin1[] = { 3, 4, 5, 6, 7, 8 }; // перечень пинов блока1
+int ledPin1_i;
+int ledPinArrSize1;
+int val1;
+int state1;
+int c1;
+int d1 = 1; // Флаг недавней сработки УЗ датчика
+
+int countExamNum; // Счетчик количества проверок резервное отключение датчиком УЗ
+unsigned long timerE = 0; // отсчет времени для TIMEE
+#define TIMEE 5000UL // 2 сек для теста. рабочее = 10 сек время между проверками резервного отключения
+int countSecExam = 5; // Число приближений для резервного отключения датчиком УЗ 
+int evenExam;
+// unsigned long timerF = 0;
+int i;
+
+#define TIMELED 500UL // 0.5 сек для теста. рабочее = 2 сек время горения ledPin
+
+int UsTriggerPin = 16; // пин Ultrasonic исходящий
+int UsEchoPin = 17; // пин Ultrasonic входящий
+unsigned long timerU = 0; // отсчет времени для TIMEU
+#define TIMEU 1000UL // 1 сек для теста. рабочее = 10 сек паузы после сработки Ultrasonic
+
+#define resistPin A4
+int resistPinValue = 0;
+int remapResistPinValue = 0;
+float cmDistance; //Расстояние на УЗ датчике
+float cmDistanceMedian; //
+
+// Функция считывания ультразвукового датчика
+long readUltrasonicDistance(int triggerPin, int echoPin){
+  pinMode(triggerPin, OUTPUT);  // Clear the trigger
+  digitalWrite(triggerPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigger pin to HIGH state for 10 microseconds
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  pinMode(echoPin, INPUT);
+  // Reads the echo pin, and returns the sound wave travel time in microseconds
+  return pulseIn(echoPin, HIGH);
+}
+
+// функция запуска ledPin блока
+void ledPinInit(int *ledPinArray, int ledPinArrSize, int val){
+  if (val <= ledPinArrSize){ // если ledPin не кончились
+    int ledPinArrayNum = val - 1; // val начинается с 1, ledPinArrayNum начинается с 0
+    unsigned long timer = millis();
+    while (millis() - timer < TIMELED){ // включаем ledPin на TIMELED сек
+      digitalWrite(ledPinArray[ledPinArrayNum], HIGH); // включаем ledPin
+    }
+    digitalWrite(ledPinArray[ledPinArrayNum], LOW); // выключаем ledPin
+  
+    // сигнал счетчик сработок в блоке
+    int i = 0;
+    while (i < val){
+      delay(700);
+      digitalWrite(speakerPin, HIGH);
+      delay(500);
+      digitalWrite(speakerPin, LOW);
+      i++;
+    }
+  }
+  else { // если ledPin кончились, 2 коротких сигнала
+    int i = 0;
+    while (i < 2){
+      digitalWrite(speakerPin, HIGH);
+      delay(200);
+      digitalWrite(speakerPin, LOW);
+      delay(200);
+      i++;
+    }
+  }
+}
+
+// функция считывания аналогового входа заданное количество раз, возвращает медианное отфильтрованное значение
+int readMedian (int analogVal, int samples){
+  // массив для хранения данных
+  int raw[samples];
+  // считываем вход и помещаем величину в ячейки массива
+  for (int i = 0; i < samples; i++){
+    raw[i] = analogVal;
+  }
+  // сортируем массив по возрастанию значений в ячейках
+  int temp = 0; // временная переменная
+
+  for (int i = 0; i < samples; i++){
+    for (int j = 0; j < samples - 1; j++){
+      if (raw[j] > raw[j + 1]){
+        temp = raw[j];
+        raw[j] = raw[j + 1];
+        raw[j + 1] = temp;
+      }
+    }
+  }
+  // возвращаем значение средней ячейки массива
+  return raw[samples/2];
+}
+void setup() {
+
+//  Serial.begin(9600);
+  
+  pinMode(statusPin, OUTPUT); // светодиод состояния
+  digitalWrite(statusPin, LOW);
+  pinMode(speakerPin, OUTPUT); // спикер оповещения
+  digitalWrite(speakerPin, LOW);
+  
+  pinMode(autoManualPin, INPUT); // // переключатель режима автосрабатывание или оповещение 
+  // кнопки запуска блоков
+  pinMode(switchPin1, INPUT); //кнопка1
+  // размер массива блоков  
+  ledPinArrSize1 = sizeof(ledPin1) / sizeof(int);
+  // пины блоков
+  for (ledPin1_i = 0; ledPin1_i <= ledPinArrSize1; ledPin1_i++){
+    pinMode(ledPin1[ledPin1_i], OUTPUT);
+    digitalWrite(ledPin1[ledPin1_i], LOW);
+  }
+  
+  // Стартовое оповещение
+//  unsigned long timeBlink = 500;
+//  while (timeBlink > 50){
+//    digitalWrite(speakerPin, HIGH);
+//    delay(timeBlink);
+//    digitalWrite(speakerPin, LOW);
+//    delay(timeBlink);
+//    timeBlink = timeBlink - 50;
+//  }
+//  digitalWrite(speakerPin, HIGH);
+//  delay(500);
+//  digitalWrite(speakerPin, LOW);
+}
+
+void loop() {
+//  Serial.println(statusPinBright);
+//  Serial.println(statusPinFade);
+  ////////////////////  
+  // индикация состояния авто/ручное/сработка
+  if (digitalRead(autoManualPin) == HIGH && d1 == 0){  // Если включен режим автосрабатывания, и флаг сработки не поднят, плавно мигать statusPin
+     if (statusPinBright < 50 || statusPinBright >= 250) { // переходим в режим затухания/загорания при достижении крайнего значения яркости
+       statusPinFade = -statusPinFade;
+     }
+    statusPinBright = statusPinBright + statusPinFade;
+    analogWrite(statusPin, statusPinBright);
+  }
+  else if (digitalRead(autoManualPin) == HIGH && d1 == 1) { // Если включен режим автосрабатывания, и флаг сработки поднят, гореть statusPin
+    digitalWrite(statusPin, HIGH);
+  }
+  else { // Если выключен режим автосрабатывания или поднят флаг сработки
+    digitalWrite(statusPin, LOW);
+  }
+  ////////////////////
+  
+  ////////////////////
+  // обработка нажатия кнопки запуска 1го блока
+  state1 = digitalRead(switchPin1);   
+  if (state1 == HIGH && c1 == 0){ // нажали кнопку1
+    delay(20); //устранение дребезга
+    c1 = 1; // устанавливаем флаг нажатия
+  }
+  if (state1 == LOW && c1 == 1){ // отпустили кнопку1
+    delay(20); //устранение дребезга
+    val1 = ++val1; // считаем кол-во нажатий
+    ledPinInit(ledPin1, ledPinArrSize1, val1); //  Включаем ledPin1 из массива с порядковым номером = val1
+    c1 = 0; // сбрасываем флаг нажатия
+  }
+  ////////////////////
+  
+  // настройка дальности сработки ультразвукового датчика переменным резистором 0-300 см
+  resistPinValue = analogRead(resistPin);
+  remapResistPinValue = map(resistPinValue, 0, 1023, 0, 350); // преобразование показаний 0-1023 в 0-400
+  Serial.print("remapResistPinValue ");
+  Serial.println(remapResistPinValue);
+  cmDistance = 0.01723 * readUltrasonicDistance(UsTriggerPin, UsEchoPin); // дальность объекта на ультразуковом датчике
+  cmDistanceMedian = readMedian(cmDistance, 15);
+  Serial.print("cmDistanceMedian ");
+  Serial.println(cmDistanceMedian);
+  delay(200); // было в примере
+  
+  ////////////////////
+  // Обработка способа сработки после обнаружения и паузы после сработки
+
+  //если УЗ датчик обнаруживает, и ledPin еще не не сработал
+  if (cmDistanceMedian < remapResistPinValue && d1 == 0) {
+    timerU = millis(); //начинаем отсчет времени
+    d1 = 1;  // устанавливаем флаг сработки УЗ датчика
+    if (digitalRead(autoManualPin) == HIGH){ // Если включен режим автосрабатывания
+      val1 = ++val1;
+      ledPinInit(ledPin1, ledPinArrSize1, val1); //  Включаем ledPin1 из массива с порядковым номером = val1
+    }
+    else { // Если выключен режим автосрабатывания, включен только сигнал оповещения
+      digitalWrite(speakerPin, HIGH);
+      delay(2000);
+      digitalWrite(speakerPin, LOW);
+    }
+  }
+  //если УЗ датчик обнаруживает, и ledPin уже сработал, но давнее TIMEU
+  if (cmDistanceMedian < remapResistPinValue && d1 == 1 && millis() - timerU > TIMEU) {
+    timerU = millis();
+  }
+  //если УЗ датчик не обнаруживает, и уже сработало, но давнее TIMEU
+  if (cmDistanceMedian >= remapResistPinValue && d1 == 1 && millis() - timerU > TIMEU) {
+    d1 = 0;
+    delay(1000); //пауза для устранения ложного срабаывания
+  }
+  
+  ////////////////////
+  // кнопка1 сброса счетчика срабатываний для замены блока1
+  if (digitalRead(switchPinReset1) == HIGH){
+    val1 = 0;
+  }
+  ////////////////////
+}
