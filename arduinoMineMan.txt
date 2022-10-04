@@ -1,15 +1,15 @@
-// int statusPin = 11; //led моргает состояние
-// int statusPinBright = 120;    // как ярко горит светодиод
-// int statusPinFade = 5;    // на какое значение будет затухать/загораться светодиод
+// int statusPin = 11; //led РјРѕСЂРіР°РµС‚ СЃРѕСЃС‚РѕСЏРЅРёРµ
+// int statusPinBright = 120;    // РєР°Рє СЏСЂРєРѕ РіРѕСЂРёС‚ СЃРІРµС‚РѕРґРёРѕРґ
+// int statusPinFade = 5;    // РЅР° РєР°РєРѕРµ Р·РЅР°С‡РµРЅРёРµ Р±СѓРґРµС‚ Р·Р°С‚СѓС…Р°С‚СЊ/Р·Р°РіРѕСЂР°С‚СЊСЃСЏ СЃРІРµС‚РѕРґРёРѕРґ
 
-int speakerPin = 13; // зуммер
+int speakerPin = 13; // Р·СѓРјРјРµСЂ
 
-int switchPin1 = 2; //кнопка1 запуска блока1
+int switchPin1 = 2; //РєРЅРѕРїРєР°1 Р·Р°РїСѓСЃРєР° Р±Р»РѕРєР°1
 int switchPin2 = 3;
 int switchPinReset1 = 14;
 int switchPinReset2 = 15;
-int ledPin1[] = { 4, 5, 6, 7 }; // перечень пинов блока1
-int ledPin2[] = { 8, 9, 10, 12 }; // перечень пинов блока1
+int ledPin1[] = { 5, 6, 7 }; // РїРµСЂРµС‡РµРЅСЊ РїРёРЅРѕРІ Р±Р»РѕРєР°1
+int ledPin2[] = { 8, 9, 10, 12 }; // РїРµСЂРµС‡РµРЅСЊ РїРёРЅРѕРІ Р±Р»РѕРєР°1
 int ledPin1_i;
 int ledPin2_i;
 int ledPinArrSize1;
@@ -20,20 +20,20 @@ int state1;
 int state2;
 int c1;
 int c2;
-#define TIMELED 500UL // 0.5 сек для теста. рабочее = 2 сек // время горения ledPin
+#define TIMELED 2000UL // 0.5 СЃРµРє РґР»СЏ С‚РµСЃС‚Р°. СЂР°Р±РѕС‡РµРµ = 2 СЃРµРє // РІСЂРµРјСЏ РіРѕСЂРµРЅРёСЏ ledPin
 
 
-// функция запуска ledPin блока
+// С„СѓРЅРєС†РёСЏ Р·Р°РїСѓСЃРєР° ledPin Р±Р»РѕРєР°
 void ledPinInit(int *ledPinArray, int ledPinArrSize, int val){
-  if (val <= ledPinArrSize){ // если ledPin не кончились
-    int ledPinArrayNum = val - 1; // val начинается с 1, ledPinArrayNum начинается с 0
+  if (val <= ledPinArrSize){ // РµСЃР»Рё ledPin РЅРµ РєРѕРЅС‡РёР»РёСЃСЊ
+    int ledPinArrayNum = val - 1; // val РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃ 1, ledPinArrayNum РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃ 0
     unsigned long timer = millis();
-    while (millis() - timer < TIMELED){ // включаем ledPin на TIMELED сек
-      digitalWrite(ledPinArray[ledPinArrayNum], HIGH); // включаем ledPin
+    while (millis() - timer < TIMELED){ // РІРєР»СЋС‡Р°РµРј ledPin РЅР° TIMELED СЃРµРє
+      digitalWrite(ledPinArray[ledPinArrayNum], HIGH); // РІРєР»СЋС‡Р°РµРј ledPin
     }
-    digitalWrite(ledPinArray[ledPinArrayNum], LOW); // выключаем ledPin
+    digitalWrite(ledPinArray[ledPinArrayNum], LOW); // РІС‹РєР»СЋС‡Р°РµРј ledPin
   
-    // сигнал счетчик сработок в блоке
+    // СЃРёРіРЅР°Р» СЃС‡РµС‚С‡РёРє СЃСЂР°Р±РѕС‚РѕРє РІ Р±Р»РѕРєРµ
     int i = 0;
     while (i < val){
       delay(700);
@@ -43,7 +43,7 @@ void ledPinInit(int *ledPinArray, int ledPinArrSize, int val){
       i++;
     }
   }
-  else { // если ledPin кончились, 2 коротких сигнала
+  else { // РµСЃР»Рё ledPin РєРѕРЅС‡РёР»РёСЃСЊ, 2 РєРѕСЂРѕС‚РєРёС… СЃРёРіРЅР°Р»Р°
     int i = 0;
     while (i < 2){
       digitalWrite(speakerPin, HIGH);
@@ -54,21 +54,21 @@ void ledPinInit(int *ledPinArray, int ledPinArrSize, int val){
     }
   }
 }
-// КОНЕЦ функции запуска ledPin блока
+// РљРћРќР•Р¦ С„СѓРЅРєС†РёРё Р·Р°РїСѓСЃРєР° ledPin Р±Р»РѕРєР°
 
 void setup(){
-//  pinMode(statusPin, OUTPUT); // светодиод состояния 
+//  pinMode(statusPin, OUTPUT); // СЃРІРµС‚РѕРґРёРѕРґ СЃРѕСЃС‚РѕСЏРЅРёСЏ 
 //  digitalWrite(statusPin, LOW);
   
-  pinMode(speakerPin, OUTPUT); // спикер оповещения
+  pinMode(speakerPin, OUTPUT); // СЃРїРёРєРµСЂ РѕРїРѕРІРµС‰РµРЅРёСЏ
   digitalWrite(speakerPin, LOW);
-// кнопки запуска блоков  
-  pinMode(switchPin1, INPUT); //кнопка1
-  pinMode(switchPin2, INPUT); //кнопка2 
-// размер массива блоков  
+// РєРЅРѕРїРєРё Р·Р°РїСѓСЃРєР° Р±Р»РѕРєРѕРІ  
+  pinMode(switchPin1, INPUT); //РєРЅРѕРїРєР°1
+  pinMode(switchPin2, INPUT); //РєРЅРѕРїРєР°2 
+// СЂР°Р·РјРµСЂ РјР°СЃСЃРёРІР° Р±Р»РѕРєРѕРІ  
   ledPinArrSize1 = sizeof(ledPin1) / sizeof(int);
   ledPinArrSize2 = sizeof(ledPin2) / sizeof(int);
-// пины блоков
+// РїРёРЅС‹ Р±Р»РѕРєРѕРІ
   for (ledPin1_i = 0; ledPin1_i <= ledPinArrSize1; ledPin1_i++){
     pinMode(ledPin1[ledPin1_i], OUTPUT);
     digitalWrite(ledPin1[ledPin1_i], LOW);
@@ -78,42 +78,40 @@ void setup(){
     digitalWrite(ledPin2[ledPin2_i], LOW);
   }
   
-//  Serial.begin(9600);
-//  Serial.println(digitalRead(2));
 }
 
 void loop(){
   
-  // обрабатываем нажатие кнопки запуска 1го блока
+  // РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј РЅР°Р¶Р°С‚РёРµ РєРЅРѕРїРєРё Р·Р°РїСѓСЃРєР° 1РіРѕ Р±Р»РѕРєР°
   state1 = digitalRead(switchPin1);
-  if (state1 == HIGH && c1 == 0){ // нажали кнопку1
-    delay(20); //устранение дребезга
-    c1 = 1; // устанавливаем флаг нажатия
+  if (state1 == HIGH && c1 == 0){ // РЅР°Р¶Р°Р»Рё РєРЅРѕРїРєСѓ1
+    delay(20); //СѓСЃС‚СЂР°РЅРµРЅРёРµ РґСЂРµР±РµР·РіР°
+    c1 = 1; // СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј С„Р»Р°Рі РЅР°Р¶Р°С‚РёСЏ
   }
-  if (state1 == LOW && c1 == 1){ // отпустили кнопку1
-    delay(20); //устранение дребезга
-    val1 = ++val1; // считаем кол-во нажатий
-    ledPinInit(ledPin1, ledPinArrSize1, val1); //  Включаем ledPin1 из массива с порядковым номером = val1
-    c1 = 0; // сбрасываем флаг нажатия
+  if (state1 == LOW && c1 == 1){ // РѕС‚РїСѓСЃС‚РёР»Рё РєРЅРѕРїРєСѓ1
+    delay(20); //СѓСЃС‚СЂР°РЅРµРЅРёРµ РґСЂРµР±РµР·РіР°
+    val1 = ++val1; // СЃС‡РёС‚Р°РµРј РєРѕР»-РІРѕ РЅР°Р¶Р°С‚РёР№
+    ledPinInit(ledPin1, ledPinArrSize1, val1); //  Р’РєР»СЋС‡Р°РµРј ledPin1 РёР· РјР°СЃСЃРёРІР° СЃ РїРѕСЂСЏРґРєРѕРІС‹Рј РЅРѕРјРµСЂРѕРј = val1
+    c1 = 0; // СЃР±СЂР°СЃС‹РІР°РµРј С„Р»Р°Рі РЅР°Р¶Р°С‚РёСЏ
   }
-  // обрабатываем нажатие кнопки запуска 2го блока
+  // РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј РЅР°Р¶Р°С‚РёРµ РєРЅРѕРїРєРё Р·Р°РїСѓСЃРєР° 2РіРѕ Р±Р»РѕРєР°
   state2 = digitalRead(switchPin2); 
-    if (state2 == HIGH && c2 == 0){ // нажали кнопку2
-    delay(20); //устранение дребезга
-  c2 = 1; // устанавливаем флаг нажатия
+    if (state2 == HIGH && c2 == 0){ // РЅР°Р¶Р°Р»Рё РєРЅРѕРїРєСѓ2
+    delay(20); //СѓСЃС‚СЂР°РЅРµРЅРёРµ РґСЂРµР±РµР·РіР°
+  c2 = 1; // СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј С„Р»Р°Рі РЅР°Р¶Р°С‚РёСЏ
   }
-  if (state2 == LOW && c2 == 1){ // отпустили кнопку2
-    delay(20); //устранение дребезга
-    val2 = ++val2; // считаем кол-во нажатий
-    ledPinInit(ledPin2, ledPinArrSize2, val2); //  Включаем ledPin2 из массива с порядковым номером = val1
-    c2 = 0; // сбрасываем флаг нажатия
+  if (state2 == LOW && c2 == 1){ // РѕС‚РїСѓСЃС‚РёР»Рё РєРЅРѕРїРєСѓ2
+    delay(20); //СѓСЃС‚СЂР°РЅРµРЅРёРµ РґСЂРµР±РµР·РіР°
+    val2 = ++val2; // СЃС‡РёС‚Р°РµРј РєРѕР»-РІРѕ РЅР°Р¶Р°С‚РёР№
+    ledPinInit(ledPin2, ledPinArrSize2, val2); //  Р’РєР»СЋС‡Р°РµРј ledPin2 РёР· РјР°СЃСЃРёРІР° СЃ РїРѕСЂСЏРґРєРѕРІС‹Рј РЅРѕРјРµСЂРѕРј = val1
+    c2 = 0; // СЃР±СЂР°СЃС‹РІР°РµРј С„Р»Р°Рі РЅР°Р¶Р°С‚РёСЏ
   }
   
-  // кнопка1 сброса счетчика срабатываний для замены блока1
+  // РєРЅРѕРїРєР°1 СЃР±СЂРѕСЃР° СЃС‡РµС‚С‡РёРєР° СЃСЂР°Р±Р°С‚С‹РІР°РЅРёР№ РґР»СЏ Р·Р°РјРµРЅС‹ Р±Р»РѕРєР°1
   if (digitalRead(switchPinReset1) == HIGH){
     val1 = 0;
   }
-  // кнопка2 сброса счетчика срабатываний для замены блока2
+  // РєРЅРѕРїРєР°2 СЃР±СЂРѕСЃР° СЃС‡РµС‚С‡РёРєР° СЃСЂР°Р±Р°С‚С‹РІР°РЅРёР№ РґР»СЏ Р·Р°РјРµРЅС‹ Р±Р»РѕРєР°2
   if (digitalRead(switchPinReset2) == HIGH){
     val2 = 0;
   }
